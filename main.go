@@ -216,9 +216,6 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
-// <-- Your bot token here
-// var Token = "REDACTED"
-
 var Token = os.Getenv("DISCORD_BOT_TOKEN")
 var pdfFolder = "./pdfs"
 
