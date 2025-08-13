@@ -239,11 +239,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error creating Discord session: %v", err)
 	}
-	var err error
-	dg, err = discordgo.New("Bot " + Token)
-	if err != nil {
-		log.Fatalf("Error creating Discord session: %v", err)
-	}
 
 	dg.AddHandler(interactionCreate)
 
