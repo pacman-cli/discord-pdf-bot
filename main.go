@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -15,17 +14,21 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
+// <-- Your bot token here
+
 var Token = os.Getenv("DISCORD_BOT_TOKEN")
 var pdfFolder = "./pdfs"
 
 // Map command name → PDF bytes
 var pdfCache = make(map[string][]byte)
 
-// Map command name → PDF file path
+// Map command name → PDF file path (for logging or reload)
 var pdfFiles = make(map[string]string)
+
 var dg *discordgo.Session
 
 func main() {
+	Token = os.Getenv("DISCORD_BOT_TOKEN")
 	if Token == "" {
 		log.Fatal("DISCORD_BOT_TOKEN environment variable not set")
 	}
@@ -45,10 +48,12 @@ func main() {
 
 	fmt.Println("Bot is running. Press CTRL+C to exit.")
 
+	// Initial scan and load PDFs into memory
 	scanPDFs()
 	loadPDFsToCache()
 	syncCommands()
 
+	// Watch pdfs folder for changes
 	go watchPDFs()
 
 	stop := make(chan os.Signal, 1)
@@ -56,17 +61,7 @@ func main() {
 	<-stop
 }
 
-// Sanitize PDF filenames for Discord commands
-func sanitizeCommandName(name string) string {
-	name = strings.ToLower(name)
-	name = strings.ReplaceAll(name, "_", "-")
-	if len(name) > 32 {
-		name = name[:32]
-	}
-	return name
-}
-
-// Scan PDF folder
+// Scan PDF folder for files
 func scanPDFs() {
 	pdfFiles = make(map[string]string)
 	files, err := ioutil.ReadDir(pdfFolder)
@@ -77,8 +72,7 @@ func scanPDFs() {
 	for _, f := range files {
 		if !f.IsDir() && strings.HasSuffix(f.Name(), ".pdf") {
 			name := strings.TrimSuffix(f.Name(), ".pdf")
-			cmdName := sanitizeCommandName(name)
-			pdfFiles[cmdName] = filepath.Join(pdfFolder, f.Name())
+			pdfFiles[name] = filepath.Join(pdfFolder, f.Name())
 		}
 	}
 }
@@ -86,17 +80,17 @@ func scanPDFs() {
 // Load PDFs into memory
 func loadPDFsToCache() {
 	pdfCache = make(map[string][]byte)
-	for cmdName, path := range pdfFiles {
+	for name, path := range pdfFiles {
 		data, err := ioutil.ReadFile(path)
 		if err != nil {
 			log.Printf("Error reading PDF %s: %v", path, err)
 			continue
 		}
-		pdfCache[cmdName] = data
+		pdfCache[name] = data
 	}
 }
 
-// Sync commands
+// Sync slash commands with current PDF files
 func syncCommands() {
 	existingCommands, err := dg.ApplicationCommands(dg.State.User.ID, "")
 	if err != nil {
@@ -104,7 +98,7 @@ func syncCommands() {
 		return
 	}
 
-	// Delete removed commands
+	// Delete commands for removed PDFs
 	for _, cmd := range existingCommands {
 		if _, exists := pdfFiles[cmd.Name]; !exists {
 			err := dg.ApplicationCommandDelete(dg.State.User.ID, "", cmd.ID)
@@ -116,7 +110,7 @@ func syncCommands() {
 		}
 	}
 
-	// Add new commands
+	// Add commands for new PDFs
 	for name := range pdfFiles {
 		found := false
 		for _, cmd := range existingCommands {
@@ -140,7 +134,7 @@ func syncCommands() {
 	}
 }
 
-// Watch PDF folder
+// Watch pdfs folder for changes
 func watchPDFs() {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -192,18 +186,18 @@ func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	// Deferred response
+	// Send deferred response first
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 	})
 
-	// Send PDF from memory
+	// Send the PDF from memory
 	_, err := s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
 		Content: fmt.Sprintf("Here is the %s PDF:", command),
 		Files: []*discordgo.File{
 			{
 				Name:   command + ".pdf",
-				Reader: bytes.NewReader(data), // <-- use bytes.NewReader
+				Reader: strings.NewReader(string(data)),
 			},
 		},
 	})
