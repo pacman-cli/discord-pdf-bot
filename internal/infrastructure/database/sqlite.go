@@ -19,7 +19,13 @@ func NewSQLite(dbPath string) (*SQLite, error) {
 	}
 
 	if err := db.Ping(); err != nil {
+		db.Close()
 		return nil, fmt.Errorf("ping database: %w", err)
+	}
+
+	if _, err := db.Exec("PRAGMA foreign_keys = ON"); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("enable foreign keys: %w", err)
 	}
 
 	slog.Info("Connected to SQLite database", "path", dbPath)
