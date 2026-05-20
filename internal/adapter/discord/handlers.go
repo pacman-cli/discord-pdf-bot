@@ -333,6 +333,8 @@ func (b *Bot) handleComponent(s *discordgo.Session, i *discordgo.InteractionCrea
 		return
 	}
 
+	state.Timestamp = time.Now()
+
 	switch direction {
 	case "next":
 		if state.Page < state.TotalPages-1 {
