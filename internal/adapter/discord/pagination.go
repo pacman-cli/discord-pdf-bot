@@ -37,12 +37,15 @@ func newPaginationCache() *paginationCache {
 func (c *paginationCache) set(key string, state *PaginationState) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if state.Timestamp.IsZero() {
+		state.Timestamp = time.Now()
+	}
 	c.items[key] = state
 }
 
 func (c *paginationCache) get(key string) (*PaginationState, bool) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	state, ok := c.items[key]
 	if !ok {
 		return nil, false
