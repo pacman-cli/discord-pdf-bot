@@ -315,12 +315,51 @@ func (b *Bot) handlePDFEdit(s *discordgo.Session, i *discordgo.InteractionCreate
 func (b *Bot) handleComponent(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	customID := i.MessageComponentData().CustomID
 
-	switch {
-	case strings.HasPrefix(customID, "page_"):
-		b.respondError(s, i, "Pagination not implemented yet")
-	default:
+	stateKey, direction, ok := parsePageCustomID(customID)
+	if !ok {
 		b.respondError(s, i, "Unknown component")
+		return
 	}
+
+	state, ok := b.pagination.get(stateKey)
+	if !ok {
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "Pagination expired. Run the command again.",
+				Flags:   discordgo.MessageFlagsEphemeral,
+			},
+		})
+		return
+	}
+
+	switch direction {
+	case "next":
+		if state.Page < state.TotalPages-1 {
+			state.Page++
+		}
+	case "prev":
+		if state.Page > 0 {
+			state.Page--
+		}
+	}
+
+	var title string
+	if state.Query != "" {
+		title = "Search Results"
+	} else {
+		title = "Available PDFs"
+	}
+
+	embed := buildPageEmbed(title, state.AllPDFs, state.Page, state.TotalPages)
+	components := buildPaginationButtons(stateKey, state.Page, state.TotalPages)
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseUpdateMessage,
+		Data: &discordgo.InteractionResponseData{
+			Embeds:     []*discordgo.MessageEmbed{embed},
+			Components: components,
+		},
+	})
 }
 
 func (b *Bot) isAdmin(i *discordgo.InteractionCreate) bool {
