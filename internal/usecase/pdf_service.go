@@ -33,17 +33,27 @@ func (s *PDFService) Search(query string) ([]*entity.PDF, error) {
 	return s.repo.Search(query)
 }
 
-func (s *PDFService) Create(name, filename, path string, fileSize int64) (*entity.PDF, error) {
+var reservedNames = map[string]bool{
+	"search": true, "list": true, "upload": true,
+	"delete": true, "pdf": true,
+}
+
+func (s *PDFService) Create(name, filename, path, description string, fileSize int64) (*entity.PDF, error) {
+	if reservedNames[name] {
+		return nil, fmt.Errorf("pdf name '%s' is reserved", name)
+	}
+
 	existing, _ := s.repo.GetByName(name)
 	if existing != nil {
 		return nil, fmt.Errorf("pdf '%s': already exists", name)
 	}
 
 	pdf := &entity.PDF{
-		Name:     name,
-		Filename: filename,
-		Path:     path,
-		FileSize: fileSize,
+		Name:        name,
+		Filename:    filename,
+		Path:        path,
+		Description: description,
+		FileSize:    fileSize,
 	}
 
 	if err := s.repo.Create(pdf); err != nil {

@@ -129,7 +129,7 @@ func TestPDFServiceCreate(t *testing.T) {
 
 	service := NewPDFService(repo)
 
-	pdf, err := service.Create("test_pdf", "test_pdf.pdf", "./pdfs/test_pdf.pdf", 1024)
+	pdf, err := service.Create("test_pdf", "test_pdf.pdf", "./pdfs/test_pdf.pdf", "A test PDF", 1024)
 	if err != nil {
 		t.Fatalf("Create failed: %v", err)
 	}
@@ -138,7 +138,7 @@ func TestPDFServiceCreate(t *testing.T) {
 		t.Errorf("Expected name 'test_pdf', got '%s'", pdf.Name)
 	}
 
-	_, err = service.Create("test_pdf", "test_pdf.pdf", "./pdfs/test_pdf.pdf", 1024)
+	_, err = service.Create("test_pdf", "test_pdf.pdf", "./pdfs/test_pdf.pdf", "", 1024)
 	if err == nil {
 		t.Error("Expected error for duplicate PDF, got nil")
 	}
