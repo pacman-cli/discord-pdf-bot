@@ -4,28 +4,59 @@ import (
 	"fmt"
 	"log/slog"
 
-	"discord-pdf-bot/internal/usecase"
+	"discord-pdf-bot/internal/domain/entity"
 
 	"github.com/bwmarrin/discordgo"
 )
 
+// PDFService defines the interface the bot needs from the PDF service.
+type PDFService interface {
+	GetByName(name string) (*entity.PDF, error)
+	GetAll() ([]*entity.PDF, error)
+	GetByCategory(categoryID int64) ([]*entity.PDF, error)
+	Search(query string) ([]*entity.PDF, error)
+	Create(name, filename, path, description string, fileSize int64) (*entity.PDF, error)
+	Update(pdf *entity.PDF) error
+	Delete(name string) error
+}
+
+// CategoryService defines the interface the bot needs from the category service.
+type CategoryService interface {
+	GetByName(name string) (*entity.Category, error)
+	GetAll() ([]*entity.Category, error)
+}
+
+// PermissionService defines the interface the bot needs from the permission service.
+type PermissionService interface {
+	CheckAccess(userRoles []string, userID string, pdfID int64) bool
+}
+
+// StorageService defines the interface the bot needs from the storage service.
+type StorageService interface {
+	Save(filename string, data []byte) (string, error)
+	Delete(path string) error
+	Read(path string) ([]byte, error)
+	List(folder string) (map[string]string, error)
+}
+
 type Bot struct {
-	session           *discordgo.Session
-	pdfService        *usecase.PDFService
-	categoryService   *usecase.CategoryService
-	permissionService *usecase.PermissionService
-	storageService    *usecase.StorageService
-	pagination        *paginationCache
-	guildID           string
-	adminRole         string
+	session             *discordgo.Session
+	pdfService          PDFService
+	categoryService     CategoryService
+	permissionService   PermissionService
+	storageService      StorageService
+	pagination          *paginationCache
+	guildID             string
+	adminRole           string
+	utilitiesRegistered bool
 }
 
 func NewBot(
 	token string,
-	pdfService *usecase.PDFService,
-	categoryService *usecase.CategoryService,
-	permissionService *usecase.PermissionService,
-	storageService *usecase.StorageService,
+	pdfService PDFService,
+	categoryService CategoryService,
+	permissionService PermissionService,
+	storageService StorageService,
 	guildID string,
 	adminRole string,
 ) (*Bot, error) {
@@ -110,12 +141,17 @@ func (b *Bot) SyncCommands() error {
 		}
 	}
 
-	b.registerUtilityCommands()
+	if !b.utilitiesRegistered {
+		if err := b.registerUtilityCommands(); err != nil {
+			slog.Error("Failed to register utility commands", "error", err)
+		}
+		b.utilitiesRegistered = true
+	}
 
 	return nil
 }
 
-func (b *Bot) registerUtilityCommands() {
+func (b *Bot) registerUtilityCommands() error {
 	commands := []*discordgo.ApplicationCommand{
 		{
 			Name:        "search",
@@ -217,7 +253,11 @@ func (b *Bot) registerUtilityCommands() {
 		},
 	}
 
-	existing, _ := b.session.ApplicationCommands(b.session.State.User.ID, b.guildID)
+	existing, err := b.session.ApplicationCommands(b.session.State.User.ID, b.guildID)
+	if err != nil {
+		return fmt.Errorf("fetch existing commands: %w", err)
+	}
+
 	existingNames := make(map[string]bool)
 	for _, e := range existing {
 		existingNames[e.Name] = true
@@ -231,4 +271,6 @@ func (b *Bot) registerUtilityCommands() {
 			}
 		}
 	}
+
+	return nil
 }

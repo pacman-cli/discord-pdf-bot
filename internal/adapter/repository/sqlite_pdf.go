@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"discord-pdf-bot/internal/domain"
 	"discord-pdf-bot/internal/domain/entity"
 )
 
@@ -26,7 +27,7 @@ func (r *SQLitePDFRepository) GetByName(name string) (*entity.PDF, error) {
 	).Scan(&pdf.ID, &pdf.Name, &pdf.Filename, &pdf.Path, &pdf.Description, &categoryID, &pdf.UploadedBy, &pdf.PageCount, &pdf.FileSize, &pdf.CreatedAt, &pdf.UpdatedAt)
 
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("pdf '%s': %w", name, err)
+		return nil, fmt.Errorf("pdf '%s': %w", name, domain.ErrPDFNotFound)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("get pdf by name: %w", err)
@@ -62,6 +63,10 @@ func (r *SQLitePDFRepository) GetAll() ([]*entity.PDF, error) {
 		pdfs = append(pdfs, pdf)
 	}
 
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate pdfs: %w", err)
+	}
+
 	return pdfs, nil
 }
 
@@ -91,6 +96,10 @@ func (r *SQLitePDFRepository) GetByCategory(categoryID int64) ([]*entity.PDF, er
 		pdfs = append(pdfs, pdf)
 	}
 
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate pdfs: %w", err)
+	}
+
 	return pdfs, nil
 }
 
@@ -118,6 +127,10 @@ func (r *SQLitePDFRepository) Search(query string) ([]*entity.PDF, error) {
 		}
 
 		pdfs = append(pdfs, pdf)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate pdfs: %w", err)
 	}
 
 	return pdfs, nil

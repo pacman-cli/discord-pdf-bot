@@ -56,6 +56,11 @@ func (b *Bot) handlePDFCommand(s *discordgo.Session, i *discordgo.InteractionCre
 		return
 	}
 
+	if i.Member == nil {
+		b.respondError(s, i, "This command can only be used in a server")
+		return
+	}
+
 	userRoles := i.Member.Roles
 	userID := i.Member.User.ID
 	if !b.permissionService.CheckAccess(userRoles, userID, pdf.ID) {
@@ -184,6 +189,13 @@ func (b *Bot) handleUpload(s *discordgo.Session, i *discordgo.InteractionCreate)
 		return
 	}
 
+	// Discord attachment size limit: 25MB
+	const maxUploadSize = 25 * 1024 * 1024
+	if attachment.Size > maxUploadSize {
+		b.respondError(s, i, "File too large. Maximum size is 25MB")
+		return
+	}
+
 	description := ""
 	if len(i.ApplicationCommandData().Options) > 1 {
 		description = i.ApplicationCommandData().Options[1].StringValue()
@@ -202,20 +214,10 @@ func (b *Bot) handleUpload(s *discordgo.Session, i *discordgo.InteractionCreate)
 		return
 	}
 
-	_, err = b.pdfService.Create(name, attachment.Filename, path, int64(len(data)))
+	_, err = b.pdfService.Create(name, attachment.Filename, path, description, int64(len(data)))
 	if err != nil {
 		b.respondError(s, i, fmt.Sprintf("Failed to register PDF: %v", err))
 		return
-	}
-
-	if description != "" {
-		pdf, _ := b.pdfService.GetByName(name)
-		if pdf != nil {
-			pdf.Description = description
-			if err := b.pdfService.Update(pdf); err != nil {
-				slog.Error("Failed to update PDF description", "name", name, "error", err)
-			}
-		}
 	}
 
 	if err := b.SyncCommands(); err != nil {
@@ -383,7 +385,7 @@ func (b *Bot) respondError(s *discordgo.Session, i *discordgo.InteractionCreate,
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Embeds: []*discordgo.MessageEmbed{embed},
-			Flags:   discordgo.MessageFlagsEphemeral,
+			Flags:  discordgo.MessageFlagsEphemeral,
 		},
 	})
 }
@@ -394,7 +396,7 @@ func (b *Bot) respondSuccess(s *discordgo.Session, i *discordgo.InteractionCreat
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Embeds: []*discordgo.MessageEmbed{embed},
-			Flags:   discordgo.MessageFlagsEphemeral,
+			Flags:  discordgo.MessageFlagsEphemeral,
 		},
 	})
 }

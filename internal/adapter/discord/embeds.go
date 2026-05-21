@@ -20,15 +20,8 @@ func pdfEmbed(pdf *entity.PDF) *discordgo.MessageEmbed {
 		},
 	}
 
-	if pdf.CategoryID != nil {
-		embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
-			Name: "Category", Value: fmt.Sprintf("%d", *pdf.CategoryID), Inline: true,
-		})
-	}
-
 	return embed
 }
-
 
 func errorEmbed(message string) *discordgo.MessageEmbed {
 	return &discordgo.MessageEmbed{

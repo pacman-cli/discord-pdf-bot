@@ -16,7 +16,12 @@ func NewDiskStorage(basePath string) *DiskStorage {
 }
 
 func (ds *DiskStorage) Save(filename string, data []byte) (string, error) {
-	path := filepath.Join(ds.basePath, filename)
+	// Prevent path traversal - use only the base filename
+	clean := filepath.Base(filename)
+	if clean == "." || clean == ".." {
+		return "", fmt.Errorf("invalid filename: %s", filename)
+	}
+	path := filepath.Join(ds.basePath, clean)
 
 	if err := os.WriteFile(path, data, 0644); err != nil {
 		return "", fmt.Errorf("save file: %w", err)

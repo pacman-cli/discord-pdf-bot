@@ -31,7 +31,17 @@ type paginationCache struct {
 }
 
 func newPaginationCache() *paginationCache {
-	return &paginationCache{items: make(map[string]*PaginationState)}
+	c := &paginationCache{items: make(map[string]*PaginationState)}
+	go c.cleanupLoop()
+	return c
+}
+
+func (c *paginationCache) cleanupLoop() {
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
+	for range ticker.C {
+		c.cleanup()
+	}
 }
 
 func (c *paginationCache) set(key string, state *PaginationState) {
