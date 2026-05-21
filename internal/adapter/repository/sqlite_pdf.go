@@ -62,6 +62,10 @@ func (r *SQLitePDFRepository) GetAll() ([]*entity.PDF, error) {
 		pdfs = append(pdfs, pdf)
 	}
 
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate pdfs: %w", err)
+	}
+
 	return pdfs, nil
 }
 
@@ -91,6 +95,10 @@ func (r *SQLitePDFRepository) GetByCategory(categoryID int64) ([]*entity.PDF, er
 		pdfs = append(pdfs, pdf)
 	}
 
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate pdfs: %w", err)
+	}
+
 	return pdfs, nil
 }
 
@@ -118,6 +126,10 @@ func (r *SQLitePDFRepository) Search(query string) ([]*entity.PDF, error) {
 		}
 
 		pdfs = append(pdfs, pdf)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate pdfs: %w", err)
 	}
 
 	return pdfs, nil
