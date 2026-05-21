@@ -1,12 +1,12 @@
 # Environment
 .env
+.env.example
 
 # Build artifacts
 bot
 discord-pdf-bot
 
-# Database
-data/
+# Database files
 *.db
 
 # macOS
@@ -15,3 +15,8 @@ data/
 # IDE
 .idea/
 .vscode/
+
+# Claude Code
+CLAUDE.md
+.serena/
+.claude/
