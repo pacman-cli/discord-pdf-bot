@@ -40,14 +40,14 @@ type StorageService interface {
 }
 
 type Bot struct {
-	session           *discordgo.Session
-	pdfService        PDFService
-	categoryService   CategoryService
-	permissionService PermissionService
-	storageService    StorageService
-	pagination        *paginationCache
-	guildID           string
-	adminRole         string
+	session             *discordgo.Session
+	pdfService          PDFService
+	categoryService     CategoryService
+	permissionService   PermissionService
+	storageService      StorageService
+	pagination          *paginationCache
+	guildID             string
+	adminRole           string
 	utilitiesRegistered bool
 }
 

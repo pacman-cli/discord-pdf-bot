@@ -385,7 +385,7 @@ func (b *Bot) respondError(s *discordgo.Session, i *discordgo.InteractionCreate,
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Embeds: []*discordgo.MessageEmbed{embed},
-			Flags:   discordgo.MessageFlagsEphemeral,
+			Flags:  discordgo.MessageFlagsEphemeral,
 		},
 	})
 }
@@ -396,7 +396,7 @@ func (b *Bot) respondSuccess(s *discordgo.Session, i *discordgo.InteractionCreat
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Embeds: []*discordgo.MessageEmbed{embed},
-			Flags:   discordgo.MessageFlagsEphemeral,
+			Flags:  discordgo.MessageFlagsEphemeral,
 		},
 	})
 }

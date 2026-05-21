@@ -23,7 +23,6 @@ func pdfEmbed(pdf *entity.PDF) *discordgo.MessageEmbed {
 	return embed
 }
 
-
 func errorEmbed(message string) *discordgo.MessageEmbed {
 	return &discordgo.MessageEmbed{
 		Title:       "Error",
