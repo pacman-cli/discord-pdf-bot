@@ -1,1 +1,17 @@
+# Environment
 .env
+
+# Build artifacts
+bot
+discord-pdf-bot
+
+# Database
+data/
+*.db
+
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
