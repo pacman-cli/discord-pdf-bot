@@ -1,10 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"discord-pdf-bot/internal/adapter/discord"
 	"discord-pdf-bot/internal/adapter/repository"
@@ -35,6 +38,13 @@ func main() {
 	if adminRole == "" {
 		adminRole = "PDF Admin"
 	}
+
+	// Keep-alive for Render free tier
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	startKeepAlive(port)
 
 	// Database
 	db, err := database.NewSQLite("./data/bot.db")
@@ -125,4 +135,32 @@ func main() {
 	<-stop
 
 	slog.Info("Shutting down...")
+}
+
+func startKeepAlive(port string) {
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	})
+
+	go func() {
+		slog.Info("Health server starting", "port", port)
+		if err := http.ListenAndServe(":"+port, nil); err != nil {
+			slog.Error("Health server failed", "error", err)
+		}
+	}()
+
+	go func() {
+		ticker := time.NewTicker(10 * time.Minute)
+		defer ticker.Stop()
+		for range ticker.C {
+			resp, err := http.Get("http://localhost:" + port + "/health")
+			if err != nil {
+				slog.Error("Keep-alive ping failed", "error", err)
+				continue
+			}
+			resp.Body.Close()
+			slog.Debug("Keep-alive ping sent")
+		}
+	}()
 }
