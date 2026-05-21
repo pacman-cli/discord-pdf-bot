@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"discord-pdf-bot/internal/domain"
 	"discord-pdf-bot/internal/domain/entity"
 )
 
@@ -26,7 +27,7 @@ func (r *SQLitePDFRepository) GetByName(name string) (*entity.PDF, error) {
 	).Scan(&pdf.ID, &pdf.Name, &pdf.Filename, &pdf.Path, &pdf.Description, &categoryID, &pdf.UploadedBy, &pdf.PageCount, &pdf.FileSize, &pdf.CreatedAt, &pdf.UpdatedAt)
 
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("pdf '%s': %w", name, err)
+		return nil, fmt.Errorf("pdf '%s': %w", name, domain.ErrPDFNotFound)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("get pdf by name: %w", err)

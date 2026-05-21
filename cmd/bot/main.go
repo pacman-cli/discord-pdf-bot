@@ -61,10 +61,9 @@ func main() {
 	pdfService := usecase.NewPDFService(pdfRepo)
 	categoryService := usecase.NewCategoryService(categoryRepo)
 	permissionService := usecase.NewPermissionService(permissionRepo)
-	storageService := usecase.NewStorageService(diskStorage)
 
 	// Initial sync from disk
-	files, err := storageService.List("./pdfs")
+	files, err := diskStorage.List("./pdfs")
 	if err != nil {
 		slog.Error("Failed to list PDFs", "error", err)
 		os.Exit(1)
@@ -76,7 +75,7 @@ func main() {
 	}
 
 	// Bot
-	bot, err := discord.NewBot(token, pdfService, categoryService, permissionService, storageService, guildID, adminRole)
+	bot, err := discord.NewBot(token, pdfService, categoryService, permissionService, diskStorage, guildID, adminRole)
 	if err != nil {
 		slog.Error("Failed to create bot", "error", err)
 		os.Exit(1)
@@ -96,7 +95,7 @@ func main() {
 	// File watcher
 	onChange := func() {
 		slog.Info("PDF folder changed, syncing...")
-		files, err := storageService.List("./pdfs")
+		files, err := diskStorage.List("./pdfs")
 		if err != nil {
 			slog.Error("Failed to list PDFs", "error", err)
 			return

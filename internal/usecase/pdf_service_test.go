@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"discord-pdf-bot/internal/domain/entity"
@@ -40,7 +41,7 @@ func (m *mockPDFRepo) GetByCategory(categoryID int64) ([]*entity.PDF, error) {
 func (m *mockPDFRepo) Search(query string) ([]*entity.PDF, error) {
 	var result []*entity.PDF
 	for _, pdf := range m.pdfs {
-		if contains(pdf.Name, query) || contains(pdf.Description, query) {
+		if strings.Contains(pdf.Name, query) || strings.Contains(pdf.Description, query) {
 			result = append(result, pdf)
 		}
 	}
@@ -60,10 +61,6 @@ func (m *mockPDFRepo) Update(pdf *entity.PDF) error {
 func (m *mockPDFRepo) Delete(name string) error {
 	delete(m.pdfs, name)
 	return nil
-}
-
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > 0 && (s[0:len(substr)] == substr || contains(s[1:], substr)))
 }
 
 func TestPDFServiceSearch(t *testing.T) {
