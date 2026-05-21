@@ -172,7 +172,7 @@ graph TB
     DA --> SS
     PS --> P
     CS --> P
-    PerS P
+    PerS --> P
     SS --> P
     RA -->|implements| P
     SA -->|implements| P
@@ -243,7 +243,7 @@ sequenceDiagram
     participant DB as SQLite
     participant Disk as File System
 
-    Note over User,Disk: PDF Download Flow (/{name})
+    Note over User,Disk: PDF Download Flow
 
     User->>Discord: /{name} command
     Discord->>Bot: InteractionCreate event
@@ -292,9 +292,9 @@ sequenceDiagram
 ```mermaid
 flowchart TD
     A[User invokes slash command] --> B{Command type?}
-    B -->|/{name}| C[Get PDF by name]
-    B -->|/upload, /delete, /pdf edit| D{Admin check}
-    B -->|/list, /search, /pdf info| E[Allow - public commands]
+    B -->|"PDF command"| C[Get PDF by name]
+    B -->|"Admin commands"| D{Admin check}
+    B -->|"Public commands"| E[Allow - public commands]
 
     C --> F[Get user roles from interaction]
     F --> G[permissionService.CheckAccess]
