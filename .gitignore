@@ -8,6 +8,13 @@ discord-pdf-bot
 
 # Database files
 *.db
+data/
+
+# PDF storage
+pdfs/
+
+# Documentation
+docs/
 
 # macOS
 .DS_Store
@@ -20,3 +27,6 @@ discord-pdf-bot
 CLAUDE.md
 .serena/
 .claude/
+
+# Go
+vendor/
