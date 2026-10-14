@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"net/http"
 	"os/signal"
 	"syscall"
 	"time"
@@ -127,6 +128,18 @@ func main() {
 		os.Exit(1)
 	}
 	defer fw.Close()
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	go func() {
+		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("Bot is running"))
+		})
+		http.ListenAndServe(":"+port, nil)
+	}()
 
 	slog.Info("Bot is running", "guild", guildID)
 
